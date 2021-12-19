@@ -1,9 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-"""
-Adapted from https://github.com/ipazc/mtcnn with re-implementation for align.
-The model is converted to onnx format, leading to inference by OpenCV which decouple the dependencies on TensorFlow/Keras.
-"""
 import os
 import imghdr
 
