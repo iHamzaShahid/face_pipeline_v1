@@ -28,7 +28,7 @@ input_name = session.get_inputs()[0].name
 output_name = session.get_outputs()[0].name
 
 # Reading dictionary
-f = open('pre.json')
+f = open('embeddings.json')
 data = json.load(f)
 print("Dict length : ", len(data["embeddings"]))
 
@@ -124,10 +124,7 @@ def infer_image(img_path):
                 blob = cv2.dnn.blobFromImage(img, 1, (112, 112), (0, 0, 0))
                 blob -= 127.5
                 blob /= 128
-                for i in range(10):
-                    start = time.time()
-                    result = session.run([output_name], {input_name: blob})
-                    print("Recognition time : ", time.time() - start)
+                result = session.run([output_name], {input_name: blob})
 
                 # Matching with the existing embeddings
                 distance = 1000
