@@ -131,7 +131,7 @@ def infer_image(img_path):
                 best_distance = 1
                 best_index = -1
                 for j in range(len(data["embeddings"])):
-                    distance = findCosineDistance(result[0][0], data["embeddings"][j])
+                    distance = findCosineDistance(result[0], data["embeddings"][j])
                     if (distance < distance_threshold) and (distance < best_distance):
                         best_index = j
                         best_distance = distance
@@ -146,3 +146,51 @@ def infer_image(img_path):
         else:
             print("Image size is small")
     return celeb
+
+def check_generate_embedding(img_path):
+
+    image = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
+    faces = detector.detect_faces_raw(image)
+    celeb = []
+    #detection_results_show(img_path, faces)
+    if len(faces[0]) != 1:
+        if len(faces[0]) < 1:
+            return "No face detected"
+        elif len(faces[0]) > 1:
+            return "Multiple face detected"
+
+    # Size of Image is less than 100 pixel,scrap it
+    image = cv2.imread(img_path)
+    if ((int(faces[0][0][3]) - int(faces[0][0][1])) > 100 or (int(faces[0][0][2]) - int(faces[0][0][0])) > 100):
+
+        crop_image = image[int(faces[0][0][1]): int(faces[0][0][3]), int(faces[0][0][0]):int(faces[0][0][2])]
+        landmarks = [int(faces[1][0][0]), int(faces[1][1][0]), int(faces[1][2][0]), int(faces[1][3][0]), int(faces[1][4][0]),
+                    int(faces[1][5][0]), int(faces[1][6][0]), int(faces[1][7][0]), int(faces[1][8][0]), int(faces[1][9][0])]
+        
+        if find_roll(landmarks) > - 20 and  find_roll(landmarks) < 20 and find_yaw(landmarks) > -35 and find_yaw(landmarks) < 35 and find_pitch(landmarks) < 2 and find_pitch(landmarks) > 0.5:
+            
+            # Face Warping
+            facial5points = np.reshape(landmarks, (2, 5)).T
+            tform.estimate(facial5points, src)
+            M = tform.params[0:2, :]
+            img = cv2.warpAffine(image, M, (112, 112), borderValue=0.0)
+            #cropped_results(img)
+            
+            # Recognition Preprocessing
+            blob = cv2.dnn.blobFromImage(img, 1, (112, 112), (0, 0, 0))
+            blob -= 127.5
+            blob /= 128
+            result = session.run([output_name], {input_name: blob})                
+
+        else:
+            return "Invalid Pose"
+    else:
+        return "Image size is small"
+    return result[0][0]
+
+def find_element_in_list(element, list_element):
+    try:
+        index_element = list_element.index(element)
+        return index_element
+    except ValueError:
+        return None
