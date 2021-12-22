@@ -149,6 +149,9 @@ def infer_image(img_path):
 
 def check_generate_embedding(img_path):
 
+    if not (os. path.exists(img_path)):
+        return "Inavlid Image Path"
+        
     image = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
     faces = detector.detect_faces_raw(image)
     celeb = []
