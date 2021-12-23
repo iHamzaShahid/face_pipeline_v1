@@ -131,7 +131,7 @@ def infer_image(img_path):
                 best_distance = 1
                 best_index = -1
                 for j in range(len(data["embeddings"])):
-                    distance = findCosineDistance(result[0], data["embeddings"][j])
+                    distance = findCosineDistance(result[0][0], data["embeddings"][j])
                     if (distance < distance_threshold) and (distance < best_distance):
                         best_index = j
                         best_distance = distance
