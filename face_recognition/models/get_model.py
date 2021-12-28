@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-os.chdir("models")
+os.chdir("face_recognition/models")
 # Downloading pretrained models
 if os.path.isfile('arcface.onnx'):
   print("File 'arcface.onnx' already exists")
@@ -23,4 +23,4 @@ if os.path.isfile('pnet.onnx'):
 else:
   subprocess.run(['gdown', '--id', '1ZOJaIQGHxDIxErYiReB09tSYRF793POz'])
 
-os.chdir("..")
+os.chdir("../..")
