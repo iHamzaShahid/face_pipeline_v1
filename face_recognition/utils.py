@@ -18,14 +18,7 @@ src[:, 0] += 8.0
 tform = trans.SimilarityTransform()
 distance_threshold = 0.55
 
-# Initializing the detector
-detector = MTCNN()
 
-# Initializing the recognizer
-model_path = "models/arcface.onnx"
-session = onnxruntime.InferenceSession(model_path, None)
-input_name = session.get_inputs()[0].name
-output_name = session.get_outputs()[0].name
 
 # Reading dictionary
 f = open('embeddings.json')
@@ -90,10 +83,14 @@ def findCosineDistance(source_representation, test_representation):
     c = np.sum(np.multiply(test_representation, test_representation))
     return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
 
-def infer_image(img_path):
+def infer_image(img_path, detector, session, input_name, output_name):
 
     image = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
+    image = cv2.resize(image, (1280, 720), interpolation = cv2.INTER_AREA)
+    start = time.time()
     faces = detector.detect_faces_raw(image)
+    end = time.time()
+    #print("Detection Time = ", end - start)
     celeb = []
     #detection_results_show(img_path, faces)
 
@@ -130,21 +127,26 @@ def infer_image(img_path):
                 distance = 1000
                 best_distance = 1
                 best_index = -1
+                #start = time.time()
                 for j in range(len(data["embeddings"])):
                     distance = findCosineDistance(result[0][0], data["embeddings"][j])
                     if (distance < distance_threshold) and (distance < best_distance):
                         best_index = j
                         best_distance = distance
+                #end = time.time()
+                #print("Embedding time : ", end - start)
 
                 if (best_index != -1):
                     celeb += [data["names"][best_index]]
-                    print("Celeb : ", data["names"][best_index])
+                    #print("Celeb : ", data["names"][best_index])
                     
 
             else:
-                print("Invalid Pose")
+                pass
+                #print("Invalid Pose")
         else:
-            print("Image size is small")
+            pass
+            #print("Image size is small")
     return celeb
 
 def check_generate_embedding(img_path):
