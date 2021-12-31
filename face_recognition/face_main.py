@@ -34,7 +34,10 @@ file_batch_dict = {
     "frame_17" : "images/37.jpg",
     "frame_18" : "images/38.jpg",
     "frame_19" : "images/39.jpg",
-    "frame_20" : "images/40.jpg"
+    "frame_20" : "images/40.jpg",
+    "frame_21" : "images/41.jpg",
+    "frame_22" : "images/42.jpg",
+    "frame_23" : "images/43.jpg"
 }
 
 
@@ -95,6 +98,7 @@ def infer_batch(batch_dict):
     results = {}
     start = time.time()
     for image_path in batch_dict:
+        #print("Frame : ", batch_dict[image_path])
         results[image_path] = infer_image(batch_dict[image_path], detector, session, input_name, output_name)
     end = time.time()
     #print("Total time : ", end - start)

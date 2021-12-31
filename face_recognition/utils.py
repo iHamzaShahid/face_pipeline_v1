@@ -104,10 +104,10 @@ def infer_image(img_path, detector, session, input_name, output_name):
             landmarks = [int(faces[1][0][i]), int(faces[1][1][i]), int(faces[1][2][i]), int(faces[1][3][i]), int(faces[1][4][i]),
                         int(faces[1][5][i]), int(faces[1][6][i]), int(faces[1][7][i]), int(faces[1][8][i]), int(faces[1][9][i])]
             
-            print("Roll : ", find_roll(landmarks))
-            print("Yaw : ", find_yaw(landmarks))
-            print("Pitch : ", find_pitch(landmarks))
-            cropped_results_show(crop_image, landmarks)
+            #print("Roll : ", find_roll(landmarks))
+            #print("Yaw : ", find_yaw(landmarks))
+            #print("Pitch : ", find_pitch(landmarks))
+            #cropped_results_show(crop_image, landmarks)
             
             if find_roll(landmarks) > - roll_threshold and  find_roll(landmarks) < roll_threshold and find_yaw(landmarks) > -yaw_threshold and find_yaw(landmarks) < yaw_threshold and find_pitch(landmarks) < 2 and find_pitch(landmarks) > 0.5:
                 
@@ -116,7 +116,7 @@ def infer_image(img_path, detector, session, input_name, output_name):
                 tform.estimate(facial5points, src)
                 M = tform.params[0:2, :]
                 img = cv2.warpAffine(image, M, (112, 112), borderValue=0.0)
-                cropped_results(img)
+                #cropped_results(img)
                 
                 # Recognition Preprocessing
                 blob = cv2.dnn.blobFromImage(img, 1, (112, 112), (0, 0, 0))
@@ -139,7 +139,7 @@ def infer_image(img_path, detector, session, input_name, output_name):
 
                 if (best_index != -1):
                     celeb += [data["names"][best_index]]
-                    print("Celeb : ", data["names"][best_index])
+                    #print("Celeb : ", data["names"][best_index])
         
 
             else:
