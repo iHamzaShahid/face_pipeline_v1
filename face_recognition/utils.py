@@ -19,7 +19,6 @@ tform = trans.SimilarityTransform()
 distance_threshold = 0.55
 
 
-
 # Reading dictionary
 f = open('embeddings.json')
 data = json.load(f)
@@ -86,7 +85,7 @@ def findCosineDistance(source_representation, test_representation):
 def infer_image(img_path, detector, session, input_name, output_name):
 
     image = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
-    image = cv2.resize(image, (1280, 720), interpolation = cv2.INTER_AREA)
+    #image = cv2.resize(image, (1280, 720), interpolation = cv2.INTER_AREA)
     start = time.time()
     faces = detector.detect_faces_raw(image)
     end = time.time()
@@ -149,7 +148,7 @@ def infer_image(img_path, detector, session, input_name, output_name):
             #print("Image size is small")
     return celeb
 
-def check_generate_embedding(img_path):
+def check_generate_embedding(img_path, detector, session, input_name, output_name):
 
     if not (os. path.exists(img_path)):
         return "Inavlid Image Path"

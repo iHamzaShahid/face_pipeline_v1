@@ -1,4 +1,7 @@
 models/*
-Pictures/*
+face_recognition/Pictures/*
+face_recognition/frames/*
+face_recognition/images/*
 *.pyc
 *.pyo
+*.onnx

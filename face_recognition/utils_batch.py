@@ -90,11 +90,12 @@ def infer_image(batch_dict, detector, session, input_name, output_name):
     images_batch = []
     for image_path in batch_dict:
         image = cv2.cvtColor(cv2.imread(batch_dict[image_path]), cv2.COLOR_BGR2RGB)
-        image = cv2.resize(image, input_dim, interpolation = cv2.INTER_AREA)
+        #image = cv2.resize(image, input_dim, interpolation = cv2.INTER_AREA)
         images_batch.append(image)
-    
+    start = time.time()
     faces = detector.detect_faces_raw(images_batch)
-    
+    end = time.time()
+    #print("Detection Time : ", end - start)
     recog_dict = {}
     recog_imgs = []
     for j in range(len(images_batch)): # loop over batch
@@ -143,6 +144,7 @@ def infer_image(batch_dict, detector, session, input_name, output_name):
 
     counter = 0
     result_dict = {}
+    time_c = 0
     for i in range (len(images_batch)):
         celeb = []
         for j in range(recog_dict[str(i)]):
@@ -151,19 +153,21 @@ def infer_image(batch_dict, detector, session, input_name, output_name):
             best_distance = 1
             best_index = -1
             emb = result[0][counter]
-            #start = time.time()
+            start = time.time()
             for j in range(len(data["embeddings"])):
                 distance = findCosineDistance(emb, data["embeddings"][j])
                 if (distance < distance_threshold) and (distance < best_distance):
                     best_index = j
                     best_distance = distance
-            #end = time.time()
-            #print("Embedding time : ", end - start)
+            end = time.time()
+            time_c += (end - start)
+            
 
             if (best_index != -1):
                 celeb += [data["names"][best_index]]
             counter += 1
         keys_list = list(batch_dict)
         result_dict.update({keys_list[i] : celeb})
+    #print("Embedding time : ", time_c)
 
     return result_dict
