@@ -108,7 +108,6 @@ def infer_batch(batch_dict):
 
 
 if __name__ == '__main__':
-    
     infer_batch(file_batch_dict)
     #for filename in os.listdir("Pictures"):
     #    name = os.path.splitext(filename)[0]
