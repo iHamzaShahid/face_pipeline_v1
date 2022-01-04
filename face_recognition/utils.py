@@ -122,7 +122,10 @@ def infer_image(img_path, detector, session, input_name, output_name):
                 blob = cv2.dnn.blobFromImage(img, 1, (112, 112), (0, 0, 0))
                 blob -= 127.5
                 blob /= 128
+                
+                # Recognition
                 result = session.run([output_name], {input_name: blob})
+                # result = trt_infer(batch_dict, blob, model_name='arcface_onnx')
 
                 # Matching with the existing embeddings
                 distance = 1000
