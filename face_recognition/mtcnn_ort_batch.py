@@ -6,6 +6,8 @@ import numpy as np
 
 from onnx_runner import load_model
 
+from trt_inference import trt_infer
+
 class StageStatus(object):
     """
     Keeps status between MTCNN stages
@@ -283,7 +285,8 @@ class MTCNN(object):
 
             img_y = np.transpose(scaled_image_batch, (0, 2, 1, 3))
 
-            out = self._pnet(img_y)
+            #out = self._pnet(img_y)
+            out = trt_infer(img_y, model_name='pnet_onnx')
 
             out0 = np.transpose(out[0], (0, 2, 1, 3))
             out1 = np.transpose(out[1], (0, 2, 1, 3))
@@ -355,7 +358,8 @@ class MTCNN(object):
             input_img = np.concatenate((input_img, tempimg1), axis=0)
 
         #print("Input image shape : ", np.array(input_img).shape)
-        out = self._rnet(input_img)
+        #out = self._rnet(input_img)
+        out = trt_infer(input_img, model_name='rnet_onnx')
 
 
         batch_output_0 = np.array(out[0])
@@ -431,7 +435,8 @@ class MTCNN(object):
         self._onet.setInput(tempimg1)
         out = self._onet.forward(['dense_5', 'dense_6', 'softmax_2'])
         """
-        out = self._onet(input_img)
+        #out = self._onet(input_img)
+        out = trt_infer(input_img, model_name='onet_onnx')
 
         #print("Out_0 shape : ", out[0].shape)
         #print("Out_1 shape : ", out[1].shape)

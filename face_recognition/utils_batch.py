@@ -7,6 +7,8 @@ import os
 from mtcnn_ort_batch import MTCNN
 import time
 
+from trt_inference import trt_infer
+
 src = np.array([
         [30.2946, 51.6963],
         [65.5318, 51.5014],
@@ -141,7 +143,9 @@ def infer_image(batch_dict, detector, session, input_name, output_name):
     blob /= 128
 
     # Recognition
-    result = session.run([output_name], {input_name: blob})
+    #result = session.run([output_name], {input_name: blob})
+    result = trt_infer(blob, model_name='arcface_onnx')
+    print("Result Shape Triton ArcFace: ", len(result[0][0]))
 
     counter = 0
     result_dict = {}
