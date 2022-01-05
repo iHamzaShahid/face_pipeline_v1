@@ -6,6 +6,7 @@ import json
 import os
 from mtcnn_ort import MTCNN
 import time
+from math import *
 
 src = np.array([
         [30.2946, 51.6963],
@@ -16,10 +17,11 @@ src = np.array([
 src[:, 0] += 8.0
 
 tform = trans.SimilarityTransform()
-distance_threshold = 0.55
+distance_threshold = 0.6
 
-roll_threshold = 80 #20
+roll_threshold = 45 #20
 yaw_threshold = 45 # 35
+pitch_threshold = 25
 
 # Reading dictionary
 f = open('embeddings.json')
@@ -62,21 +64,40 @@ def cropped_results(image):
     cv2.waitKey(0)
 
 def find_roll(pts):
-    return pts[6] - pts[5]
+    return degrees(atan((pts[6] - pts[5])/(pts[1] - pts[0])))
 
-def find_yaw(pts):
-    le2n = pts[2] - pts[0]
-    re2n = pts[1] - pts[2]
-    if le2n < 0 or re2n < 0:
-        return 100
-    return le2n - re2n
 
-def find_pitch(pts):
-    eye_y = (pts[5] + pts[6]) / 2
-    mou_y = (pts[8] + pts[9]) / 2
-    e2n = eye_y - pts[7]
-    n2m = pts[7] - mou_y
-    return e2n/n2m
+def find_pose(points):
+    X=points[0:5]
+    Y=points[5:10]
+
+    angle=np.arctan((Y[1]-Y[0])/(X[1]-X[0]))/np.pi*180
+    alpha=np.cos(np.deg2rad(angle))
+    beta=np.sin(np.deg2rad(angle))
+    
+    # compensate for roll: rotate points (landmarks) so that both the eyes are
+    # alligned horizontally 
+    Xr=np.zeros((5))
+    Yr=np.zeros((5))
+    for i in range(5):
+        Xr[i]=alpha*X[i]+beta*Y[i]+(1-alpha)*X[2]-beta*Y[2]
+        Yr[i]=-beta*X[i]+alpha*Y[i]+beta*X[2]+(1-alpha)*Y[2]
+
+    # average distance between eyes and mouth
+    dXtot=(Xr[1]-Xr[0]+Xr[4]-Xr[3])/2
+    dYtot=(Yr[3]-Yr[0]+Yr[4]-Yr[1])/2
+
+    # average distance between nose and eyes
+    dXnose=(Xr[1]-Xr[2]+Xr[4]-Xr[2])/2
+    dYnose=(Yr[3]-Yr[2]+Yr[4]-Yr[2])/2
+
+    # relative rotation 0% is frontal 100% is profile
+    Xfrontal=np.abs(np.clip(-90+90/0.5*dXnose/dXtot,-90,90))
+    Yfrontal=np.abs(np.clip(-90+90/0.5*dYnose/dYtot,-90,90))
+    #print("Yaw : ", Xfrontal)
+    #print("Pitch : ", Yfrontal)
+
+    return Xfrontal, Yfrontal
 
 def findCosineDistance(source_representation, test_representation):
     a = np.matmul(np.transpose(source_representation), test_representation)
@@ -104,12 +125,11 @@ def infer_image(img_path, detector, session, input_name, output_name):
             landmarks = [int(faces[1][0][i]), int(faces[1][1][i]), int(faces[1][2][i]), int(faces[1][3][i]), int(faces[1][4][i]),
                         int(faces[1][5][i]), int(faces[1][6][i]), int(faces[1][7][i]), int(faces[1][8][i]), int(faces[1][9][i])]
             
-            #print("Roll : ", find_roll(landmarks))
-            #print("Yaw : ", find_yaw(landmarks))
-            #print("Pitch : ", find_pitch(landmarks))
+            roll = find_roll(landmarks)
+            yaw, pitch = find_pose(landmarks)
             #cropped_results_show(crop_image, landmarks)
             
-            if find_roll(landmarks) > - roll_threshold and  find_roll(landmarks) < roll_threshold and find_yaw(landmarks) > -yaw_threshold and find_yaw(landmarks) < yaw_threshold and find_pitch(landmarks) < 2 and find_pitch(landmarks) > 0.5:
+            if (roll > -roll_threshold and  roll < roll_threshold) and  yaw < yaw_threshold and pitch < pitch_threshold:
                 
                 # Face Warping
                 facial5points = np.reshape(landmarks, (2, 5)).T
@@ -178,7 +198,11 @@ def check_generate_embedding(img_path, detector, session, input_name, output_nam
         landmarks = [int(faces[1][0][0]), int(faces[1][1][0]), int(faces[1][2][0]), int(faces[1][3][0]), int(faces[1][4][0]),
                     int(faces[1][5][0]), int(faces[1][6][0]), int(faces[1][7][0]), int(faces[1][8][0]), int(faces[1][9][0])]
         
-        if find_roll(landmarks) > - 20 and  find_roll(landmarks) < 20 and find_yaw(landmarks) > -35 and find_yaw(landmarks) < 35 and find_pitch(landmarks) < 2 and find_pitch(landmarks) > 0.5:
+        roll = find_roll(landmarks)
+        yaw, pitch = find_pose(landmarks)
+        #cropped_results_show(crop_image, landmarks)
+        
+        if (roll > -roll_threshold and  roll < roll_threshold) and  yaw < yaw_threshold and pitch < pitch_threshold:
             
             # Face Warping
             facial5points = np.reshape(landmarks, (2, 5)).T
