@@ -96,21 +96,23 @@ def delete_embedding(name):
 # Returns the results of inference
 def infer_batch(batch_dict):
     results = {}
-    start = time.time()
     for image_path in batch_dict:
         #print("Frame : ", batch_dict[image_path])
         results[image_path] = infer_image(batch_dict[image_path], detector, session, input_name, output_name)
-    end = time.time()
-    #print("Total time : ", end - start)
+        inference_results_show(batch_dict[image_path], results[image_path]) 
 
-    print(results)
+    #print(results)
     return results
 
 
 if __name__ == '__main__':
     infer_batch(file_batch_dict)
-    #for filename in os.listdir("Pictures"):
-    #    name = os.path.splitext(filename)[0]
-    #    img_path = os.path.join("Pictures",filename)
-    #    print(name)
-    #    add_embedding(img_path, name)
+    """
+    folder = "pictures"
+    for filename in os.listdir(folder):
+        name = os.path.splitext(filename)[0]
+        img_path = os.path.join(folder,filename)
+        print(name)
+        add_embedding(img_path, name)
+    """
+    

@@ -28,6 +28,26 @@ f = open('embeddings.json')
 data = json.load(f)
 print("Dict length : ", len(data["embeddings"]))
 
+def inference_results_show(image_path, frame_results):
+
+    image = cv2.imread(image_path)
+
+    for i in range(len(frame_results["Label"])):
+        cv2.rectangle(image,
+                    (int(frame_results["Bbox"][i][0]), int(frame_results["Bbox"][i][1])),
+                    (int(frame_results["Bbox"][i][2]), int(frame_results["Bbox"][i][3])),
+                    (0,155,255), 2)
+        cv2.putText(image, frame_results["Label"][i], (int(frame_results["Bbox"][i][0]), int(frame_results["Bbox"][i][1])-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
+        
+        cv2.circle(image,(int(frame_results["Landmarks"][i][0]), int(frame_results["Landmarks"][i][5])), 2, (36,255,12), 2)
+        cv2.circle(image,(int(frame_results["Landmarks"][i][1]), int(frame_results["Landmarks"][i][6])), 2, (36,255,12), 2)
+        cv2.circle(image,(int(frame_results["Landmarks"][i][2]), int(frame_results["Landmarks"][i][7])), 2, (36,255,12), 2)
+        cv2.circle(image,(int(frame_results["Landmarks"][i][3]), int(frame_results["Landmarks"][i][8])), 2, (36,255,12), 2)
+        cv2.circle(image,(int(frame_results["Landmarks"][i][4]), int(frame_results["Landmarks"][i][9])), 2, (36,255,12), 2)
+        
+    cv2.imshow("Input", image)
+    cv2.waitKey(0)
+
 def detection_results_show(image_path, faces):
 
     image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
@@ -94,8 +114,6 @@ def find_pose(points):
     # relative rotation 0% is frontal 100% is profile
     Xfrontal=np.abs(np.clip(-90+90/0.5*dXnose/dXtot,-90,90))
     Yfrontal=np.abs(np.clip(-90+90/0.5*dYnose/dYtot,-90,90))
-    #print("Yaw : ", Xfrontal)
-    #print("Pitch : ", Yfrontal)
 
     return Xfrontal, Yfrontal
 
@@ -109,10 +127,18 @@ def infer_image(img_path, detector, session, input_name, output_name):
 
     image = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
     #image = cv2.resize(image, (1280, 720), interpolation = cv2.INTER_AREA)
-    start = time.time()
+
     faces = detector.detect_faces_raw(image)
-    end = time.time()
-    #print("Detection Time = ", end - start)
+    
+    Bbox = []
+    landmark = []
+    if (len(faces[0]) != 0):
+        Bbox = faces[0][:,0:4].tolist()
+        for i in range(len(faces[0])):
+            landmarks = [int(faces[1][0][i]), int(faces[1][1][i]), int(faces[1][2][i]), int(faces[1][3][i]), int(faces[1][4][i]),
+                        int(faces[1][5][i]), int(faces[1][6][i]), int(faces[1][7][i]), int(faces[1][8][i]), int(faces[1][9][i])]
+            landmark += [landmarks]
+
     celeb = []
     #detection_results_show(img_path, faces)
 
@@ -127,10 +153,12 @@ def infer_image(img_path, detector, session, input_name, output_name):
             
             roll = find_roll(landmarks)
             yaw, pitch = find_pose(landmarks)
+            #print("Roll : ", roll)
+            #print("Yaw : ", yaw)
+            #print("Pitch : ", pitch)
             #cropped_results_show(crop_image, landmarks)
             
-            if (roll > -roll_threshold and  roll < roll_threshold) and  yaw < yaw_threshold and pitch < pitch_threshold:
-                
+            if (roll > -roll_threshold and  roll < roll_threshold) and  yaw < yaw_threshold and pitch < pitch_threshold:    
                 # Face Warping
                 facial5points = np.reshape(landmarks, (2, 5)).T
                 tform.estimate(facial5points, src)
@@ -163,17 +191,23 @@ def infer_image(img_path, detector, session, input_name, output_name):
                 if (best_index != -1):
                     celeb += [data["names"][best_index]]
                     #print("Celeb : ", data["names"][best_index])
+                else:
+                    #print("Celeb : Unknown")
+                    celeb += ["Unknown"]
+
         
 
             else:
                 #print("Roll : ", find_roll(landmarks))
                 #print("Yaw : ", find_yaw(landmarks))
                 #print("Pitch : ", find_pitch(landmarks))
-                print("Invalid Pose")
+                #print("Invalid Pose")
+                celeb += ["Invalid Pose"]
         else:
-            #pass
-            print("Image size is small")
-    return celeb
+            #print("Image size is small")
+            celeb += ["Invalid Pose"]
+
+    return {"Label":celeb, "Bbox":Bbox, "Landmarks":landmark}
 
 def check_generate_embedding(img_path, detector, session, input_name, output_name):
 
@@ -203,7 +237,6 @@ def check_generate_embedding(img_path, detector, session, input_name, output_nam
         #cropped_results_show(crop_image, landmarks)
         
         if (roll > -roll_threshold and  roll < roll_threshold) and  yaw < yaw_threshold and pitch < pitch_threshold:
-            
             # Face Warping
             facial5points = np.reshape(landmarks, (2, 5)).T
             tform.estimate(facial5points, src)
